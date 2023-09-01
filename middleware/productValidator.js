@@ -1,6 +1,6 @@
 const { body, query, param } = require("express-validator");
 
-const expressValidator = {
+const productValidator = {
   create_product_Validator: [
     body("title")
       .exists()
@@ -106,4 +106,4 @@ const expressValidator = {
   ],
 };
 
-module.exports = expressValidator;
+module.exports = productValidator;

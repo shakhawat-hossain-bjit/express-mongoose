@@ -2,6 +2,7 @@ const Product = require("../models/Product");
 const { insertInLog } = require("../server/logFile");
 const { success, failure } = require("../utils/common");
 const { validationResult } = require("express-validator");
+const sendVerificationEmail = require("../utils/nodeMailer");
 
 class ProductController {
   fetchAll = async (req, res) => {
@@ -50,14 +51,17 @@ class ProductController {
         let result = await Product.find({ _id: id });
         let logFileResult = await insertInLog("GET_ONE_PRODUCT", id);
         // console.log(result);
-        if (result.length)
+        if (result.length) {
+          // const verificationCode = generateVerificationCode();
+          // await sendVerificationEmail("shihabctag@gmail.com", 123456);
           return res
             .status(200)
             .send(success("Successfully fetched the data", result[0]));
-        else
+        } else {
           return res
             .status(404)
             .send(failure("There is no such data with this ID"));
+        }
       } catch (error) {
         console.log(error);
         return res.status(400).send(failure("Internal error occured"));

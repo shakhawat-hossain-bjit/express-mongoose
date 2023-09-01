@@ -1,3 +1,4 @@
+const Order = require("../models/Order");
 const User = require("../models/User");
 const { insertInLog } = require("../server/logFile");
 const { success, failure } = require("../utils/common");
@@ -56,30 +57,27 @@ class UserController {
 
   findOrdersOfUser = async (req, res) => {
     const { id } = req.params;
+    console.log(id);
     if (id) {
       try {
-        let result = await User.getOrdersByUserId(id);
+        let result = await Order.find({ customerId: id })
+          .populate("products.productId")
+          .populate("customerId");
+        console.log(result);
         let logFileResult = await insertInLog("GET_ORDERS_FOR_USER", id);
-        if (result.success) {
-          if (result?.data)
-            return res
-              .status(200)
-              .send(success("Successfully fetched the data", result?.data));
-          else
-            return res
-              .status(404)
-              .send(failure("There is no such data with this ID"));
-        } else {
-          if (result?.message) {
-            return res.status(400).send(failure(result?.message));
-          }
-          return res.status(400).send(failure("failed to fetch the data"));
-        }
+
+        if (result?.length)
+          return res
+            .status(200)
+            .send(success("Successfully fetched the data", result));
+        else
+          return res
+            .status(404)
+            .send(failure("There is no such data with this ID"));
       } catch (error) {
+        console.log("error ", error);
         return res.status(400).send(failure("Internal error occured"));
       }
-    } else {
-      return res.status(404).send(failure("Pass an id via your url"));
     }
   };
 }

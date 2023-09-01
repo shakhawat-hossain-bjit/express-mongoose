@@ -80,25 +80,25 @@ class Validator {
   };
 
   // reading file should be in User model.... need to place the code here
-  checkIfEmailUsed = async (req, res, next) => {
-    let email = req.body?.email?.toLowerCase();
-    fsPromise
-      .readFile(path.join(__dirname, "..", "data", "user.json"), {
-        encoding: "utf-8",
-      })
-      .then((data) => {
-        const jsonData = JSON.parse(data);
-        const found = jsonData.find((x) => x.email == email);
-        if (found) {
-          res.status(422).send(failure("This email is already is use"));
-        } else {
-          next();
-        }
-      })
-      .catch((error) => {
-        return res.status(400).send(failure("Error occured"));
-      });
-  };
+  //   checkIfEmailUsed = async (req, res, next) => {
+  //     let email = req.body?.email?.toLowerCase();
+  //     fsPromise
+  //       .readFile(path.join(__dirname, "..", "data", "user.json"), {
+  //         encoding: "utf-8",
+  //       })
+  //       .then((data) => {
+  //         const jsonData = JSON.parse(data);
+  //         const found = jsonData.find((x) => x.email == email);
+  //         if (found) {
+  //           res.status(422).send(failure("This email is already is use"));
+  //         } else {
+  //           next();
+  //         }
+  //       })
+  //       .catch((error) => {
+  //         return res.status(400).send(failure("Error occured"));
+  //       });
+  //   };
 }
 
 module.exports = new Validator();

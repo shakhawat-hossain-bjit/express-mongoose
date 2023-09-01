@@ -1,51 +1,47 @@
-const fs = require("fs");
-const path = require("path");
-const fsPromise = require("fs").promises;
+const mongoose = require("mongoose");
 
-class Order {
-  async getSingleData(id) {
-    console.log("inside ", id);
-    return fsPromise
-      .readFile(path.join(__dirname, "..", "data", "order.json"), {
-        encoding: "utf-8",
-      })
-      .then((data) => {
-        data = JSON.parse(data);
-        let order = data.find((x) => x.id == id);
-        return order;
-      })
-      .then((order) => {
-        // console.log(order);
-        if (order) {
-          return fsPromise
-            .readFile(path.join(__dirname, "..", "data", "product.json"), {
-              encoding: "utf-8",
-            })
-            .then((data) => {
-              let products = JSON.parse(data);
-              // console.log("products ", products, "------");
-              // console.log("order ", order);
-              let orderedProducts = products.filter((x) => {
-                if (order.products.includes(x.id)) {
-                  return x;
-                }
-              });
+const orderSchema = new mongoose.Schema(
+  {
+    customerId: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    products: [
+      {
+        productId: {
+          type: mongoose.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          min: 1,
+        },
+        _id: false,
+      },
+    ],
+    totalPrice: {
+      type: Number,
+    },
+  },
+  { timestamps: true }
+);
 
-              order.orderedProducts = orderedProducts;
+orderSchema.pre("save", async function (next) {
+  // fetch products and check their stock with my quantity
+  console.log(" pre this ", this);
 
-              return { success: true, data: order };
-            })
-            .catch((error) => {
-              return { success: false };
-            });
-        } else {
-          return { success: true };
-        }
-      })
-      .catch((error) => {
-        return { success: false };
-      });
-  }
-}
+  next();
+});
 
-module.exports = new Order();
+// orderSchema.post("save", async function (doc) {
+//   console.log("post ", doc._id);
+//   orderDetails = await Order.findOne({ _id: doc._id })
+//     .populate("products.productId")
+//     .populate("customerId");
+//   console.log(orderDetails);
+// });
+
+const Order = mongoose.model("Orders", orderSchema);
+module.exports = Order;
