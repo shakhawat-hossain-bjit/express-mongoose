@@ -6,12 +6,14 @@ var cors = require("cors");
 const dotenv = require("dotenv");
 const productRouter = require("./routes/products.route");
 const userRouter = require("./routes/users.route");
+const authRouter = require("./routes/auth.route");
 const orderRouter = require("./routes/orders.route");
 const { failure, success } = require("./utils/common");
 const databaseConnection = require("./db/config");
 dotenv.config();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors());
 
@@ -25,6 +27,7 @@ app.use((err, req, res, next) => {
 
 app.use("/products", productRouter);
 app.use("/users", userRouter);
+app.use("/auth", authRouter);
 app.use("/orders", orderRouter);
 
 app.get("/", (req, res) => {
@@ -36,7 +39,7 @@ app.use("*", (req, res) => {
 
 databaseConnection(() => {
   app.listen(8000, () => {
-    //   console.log(process.env.MY_SECRET_KEY);
+    // console.log(process.env.MY_SECRET_KEY);
     let date = new Date();
     console.log(
       `App is running on port 8000 ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} `
