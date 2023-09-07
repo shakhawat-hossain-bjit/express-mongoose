@@ -8,8 +8,9 @@ const HTTP_STATUS = require("../constants/statusCode");
 class ProductController {
   fetchAll = async (req, res) => {
     try {
-      const { page, limit } = req.query;
-      console.log(page, limit);
+      //pagination
+      const { page = 1, limit = 10 } = req.query;
+      // console.log(page, limit);
       if (page < 1 || limit < 0) {
         return res
           .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
@@ -35,7 +36,7 @@ class ProductController {
         let tmp = [sortDesc];
         sortDesc = tmp;
       }
-      console.log("arrafy ", sortParam, sortAsc, sortDesc);
+      // console.log("arrafy ", sortParam, sortAsc, sortDesc);
 
       const isExistBoth =
         sortAsc?.length === sortDesc?.length &&
@@ -71,43 +72,71 @@ class ProductController {
               )
             );
       }
-      console.log(sortObj);
+      // console.log(sortObj);
 
       // filter
+      // rating range
       let query = {};
-      // query.$and.push({});
       let { ratingType } = req.query;
       let ratingLow, ratingHigh;
       if (ratingType == "high") {
-        // ratingLow = 4.5;
-        // ratingHigh = 5;
-        query.rating = { $gt: 4.5 };
+        query.rating = { $gt: 4.8 };
       } else if (ratingType == "mid") {
-        // ratingLow = 3.5;
-        // ratingHigh = 4.5;
-        // query.$and.push({ rating: { $gt: 3.5, $lt: 4.5 } });
+        query = {
+          $and: [{ rating: { $gte: 3.5 } }, { rating: { $lte: 4 } }],
+        };
       } else if (ratingType == "low") {
-        // ratingLow = 0;
-        // ratingHigh = 3.5;
-        // query.$and.push({ rating: { $lt: 3.5 } });
+        query.rating = { $lte: 3 };
       } else if (ratingType) {
         return res
           .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
           .send(failure("Rating type " + ratingType + " not valid"));
       }
+      // price range
+      let { priceType } = req.query;
+      if (priceType == "high") {
+        query.price = { $gt: 1000 };
+      } else if (priceType == "mid") {
+        query = {
+          $and: [{ price: { $gte: 500 } }, { rating: { $lte: 1000 } }],
+        };
+      } else if (priceType == "low") {
+        query.price = { $gt: 100 };
+      } else if (priceType) {
+        return res
+          .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
+          .send(failure("Rating type " + priceType + " not valid"));
+      }
 
       // find by specific property
       let { rating, price, stock } = req.query;
       if (price || price == 0) {
-        console.log(price);
+        // console.log(price);
         query.price = parseFloat(price);
       }
-      console.log("query ", query);
+      if (rating || rating == 0) {
+        // console.log(rating);
+        query.rating = parseFloat(rating);
+      }
+      if (stock || stock == 0) {
+        // console.log(stock);
+        query.stock = parseFloat(stock);
+      }
+
+      // find by title and description
+      let { search } = req.query;
+      if (search) {
+        let re = new RegExp(`${search}`, "i");
+        query.title = { $regex: re };
+        query.description = { $regex: re };
+      }
+      console.log("query  ==> ", query);
 
       let result = await Product.find(query)
         .sort(sortObj)
         .skip((page - 1) * limit)
         .limit(limit);
+      // console.log("result ", result);
 
       let totalDocuemnts = await Product.countDocuments(query);
       console.log(totalDocuemnts);
