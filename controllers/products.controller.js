@@ -3,17 +3,126 @@ const { insertInLog } = require("../server/logFile");
 const { success, failure } = require("../utils/common");
 const { validationResult } = require("express-validator");
 const sendVerificationEmail = require("../utils/nodeMailer");
+const HTTP_STATUS = require("../constants/statusCode");
 
 class ProductController {
   fetchAll = async (req, res) => {
     try {
-      let result = await Product.find({});
+      const { page, limit } = req.query;
+      console.log(page, limit);
+      if (page < 1 || limit < 0) {
+        return res
+          .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
+          .send(
+            failure(
+              "Page and Limit values must be at least 1 or 0 respectively"
+            )
+          );
+      }
+
+      // sort portion
+      let { sortParam, sortAsc, sortDesc } = req.query;
+      console.log(sortParam, sortAsc, sortDesc);
+      if (sortParam && !Array.isArray(sortParam)) {
+        let tmp = [sortParam];
+        sortParam = tmp;
+      }
+      if (sortAsc && !Array.isArray(sortAsc)) {
+        let tmp = [sortAsc];
+        sortAsc = tmp;
+      }
+      if (sortDesc && !Array.isArray(sortDesc)) {
+        let tmp = [sortDesc];
+        sortDesc = tmp;
+      }
+      console.log("arrafy ", sortParam, sortAsc, sortDesc);
+
+      const isExistBoth =
+        sortAsc?.length === sortDesc?.length &&
+        sortAsc?.every((val) => sortDesc?.includes(val) && val != undefined);
+
+      if (isExistBoth) {
+        return res
+          .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
+          .send(
+            failure(
+              "Same property can't be used for both ascending and descending sorting"
+            )
+          );
+      }
+      let sortObj = {};
+      if (sortParam?.length) {
+        sortParam?.forEach((x) => {
+          if (sortAsc?.includes(x)) {
+            sortObj[x] = 1;
+          } else if (sortDesc?.includes(x)) {
+            sortObj[x] = -1;
+          } else {
+            sortObj[x] = 1;
+          }
+        });
+      } else {
+        if (sortAsc?.length || sortDesc?.length)
+          return res
+            .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
+            .send(
+              failure(
+                "Sort parameter is not provided, but sort order is provided"
+              )
+            );
+      }
+      console.log(sortObj);
+
+      // filter
+      let query = {};
+      // query.$and.push({});
+      let { ratingType } = req.query;
+      let ratingLow, ratingHigh;
+      if (ratingType == "high") {
+        // ratingLow = 4.5;
+        // ratingHigh = 5;
+        query.rating = { $gt: 4.5 };
+      } else if (ratingType == "mid") {
+        // ratingLow = 3.5;
+        // ratingHigh = 4.5;
+        // query.$and.push({ rating: { $gt: 3.5, $lt: 4.5 } });
+      } else if (ratingType == "low") {
+        // ratingLow = 0;
+        // ratingHigh = 3.5;
+        // query.$and.push({ rating: { $lt: 3.5 } });
+      } else if (ratingType) {
+        return res
+          .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
+          .send(failure("Rating type " + ratingType + " not valid"));
+      }
+
+      // find by specific property
+      let { rating, price, stock } = req.query;
+      if (price || price == 0) {
+        console.log(price);
+        query.price = parseFloat(price);
+      }
+      console.log("query ", query);
+
+      let result = await Product.find(query)
+        .sort(sortObj)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      let totalDocuemnts = await Product.countDocuments(query);
+      console.log(totalDocuemnts);
+
       let logFileResult = await insertInLog("GET_ALL_PRODUCT");
-      // console.log(result);
-      if (result?.length) {
+      const obj = {};
+      obj.total = totalDocuemnts;
+      obj.countInCurrentPage = result.length;
+      obj.page = page;
+      obj.limit = limit;
+      obj.products = result;
+      if (totalDocuemnts) {
         return res
           .status(200)
-          .send(success("Successfully fetched all the data", result));
+          .send(success("Successfully fetched the data", obj));
       } else {
         return res.status(400).send(failure("There is no data"));
       }

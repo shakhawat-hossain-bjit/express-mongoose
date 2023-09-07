@@ -5,6 +5,7 @@ const User = require("../models/User");
 const { insertInLog } = require("../server/logFile");
 const { success, failure } = require("../utils/common");
 const bcrypt = require("bcrypt");
+const { generateToken } = require("../utils/token");
 
 class AuthController {
   signUp = async (req, res) => {
@@ -17,7 +18,7 @@ class AuthController {
           .send(failure("Invalid inputs provided", validation));
       }
 
-      console.log(req.body);
+      // console.log(req.body);
       let { email, password, phone, name } = req.body;
       email = email.toLowerCase().trim();
       name = name.toLowerCase().trim();
@@ -65,13 +66,14 @@ class AuthController {
         /* saving the authentication info in the auth collection */
         let output = await auth.save();
         // console.log(output);
-        if (output?._id) {
+        const response = output.toObject();
+        delete response.password;
+        // console.log("response ", response);
+        if (response?._id) {
           let logFileResult = await insertInLog("SIGN_UP", email);
-          return res.status(HTTP_STATUS.OK).send(
-            success("successfully registered the user", {
-              userId: output?._id,
-            })
-          );
+          return res
+            .status(HTTP_STATUS.OK)
+            .send(success("successfully registered the user", response));
         } else {
           return res
             .status(HTTP_STATUS.NOT_ACCEPTABLE)
@@ -94,7 +96,9 @@ class AuthController {
     try {
       let { email, password } = req.body;
       email = email.toLowerCase().trim();
-      let user = await Auth.findOne({ email: email }).populate("userId");
+      let user = await Auth.findOne({ email: email })
+        .populate("userId")
+        .select("-createdAt -updatedAt");
       let flag = false;
       // console.log("user ", user);
       if (user?._id) {
@@ -105,9 +109,14 @@ class AuthController {
       user.password = undefined;
       if (flag) {
         let logFileResult = await insertInLog("LOG_IN", email);
+        const responseAuth = user.toObject();
+        let token = generateToken(responseAuth);
+        // console.log("token ", token);
+        responseAuth.token = token;
+        // console.log(user);
         return res
           .status(HTTP_STATUS.OK)
-          .send(success("Successfully Logged In", user));
+          .send(success("Successfully Logged In", responseAuth));
       } else {
         return res
           .status(HTTP_STATUS.UNAUTHORIZED)
