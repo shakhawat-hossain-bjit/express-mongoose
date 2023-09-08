@@ -73,7 +73,7 @@ class OrerController {
       if (id) {
         let result = await Order.find({ _id: id })
           .populate("products.productId")
-          .populate("customerId");
+          .populate("customerId", "-password");
         // console.log(result);
         let logFileResult = await insertInLog("FIND_ORDER", id);
         if (result.length) {

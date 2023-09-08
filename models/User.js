@@ -13,6 +13,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  phone: {
+    type: Number,
+  },
+  name: {
+    type: String,
+  },
   email: {
     type: String,
     required: [true, "email is not provided"],

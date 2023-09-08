@@ -59,8 +59,6 @@ class AuthController {
         let auth = new Auth({
           email,
           password,
-          phone,
-          name,
           userId: result?._id,
         });
         /* saving the authentication info in the auth collection */

@@ -8,6 +8,7 @@ const productRouter = require("./routes/products.route");
 const userRouter = require("./routes/users.route");
 const authRouter = require("./routes/auth.route");
 const orderRouter = require("./routes/orders.route");
+const cartRouter = require("./routes/carts.route");
 const { failure, success } = require("./utils/common");
 const databaseConnection = require("./db/config");
 dotenv.config();
@@ -29,6 +30,7 @@ app.use("/products", productRouter);
 app.use("/users", userRouter);
 app.use("/auth", authRouter);
 app.use("/orders", orderRouter);
+app.use("/cart", cartRouter);
 
 app.get("/", (req, res) => {
   return res.status(200).send(success("Hello world"));
