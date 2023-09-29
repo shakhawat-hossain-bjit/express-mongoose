@@ -211,14 +211,36 @@ class ProductController {
 
   postData = async (req, res) => {
     try {
-      const validation = validationResult(req).array();
-      if (validation.length) {
-        return res
-          .status(422)
-          .send(failure("Invalid inputs provided", validation));
-      }
-
-      let product = new Product(req.body);
+      // const validation = validationResult(req).array();
+      // if (validation.length) {
+      //   return res
+      //     .status(422)
+      //     .send(failure("Invalid inputs provided", validation));
+      // }
+      console.log("body ", req.body);
+      const {
+        title,
+        description,
+        price,
+        stock,
+        discountPercentage,
+        rating,
+        brand,
+        category,
+        images,
+      } = req.body;
+      let product = new Product({
+        title,
+        description,
+        price,
+        stock,
+        discountPercentage,
+        rating,
+        brand,
+        category,
+        images,
+      });
+      console.log(product);
       let result = await product.save();
 
       // console.log("result ", result);

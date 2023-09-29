@@ -4,7 +4,7 @@ const productSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "title was not found"],
+      required: [true, "title was nottt found"],
       minLength: 5,
       maxLength: 30,
     },
@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema(
     discountPercentage: {
       type: Number,
     },
-    rating: { type: Number, required: [true, "ratinng was not found"] },
+    rating: { type: Number, required: [true, "rating was not found"] },
     brand: { type: String },
     category: { type: String },
     images: {

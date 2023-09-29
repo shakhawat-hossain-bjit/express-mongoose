@@ -11,8 +11,8 @@ router.get("/all", ProductController.fetchAll);
 router.get("/find-by-id/:id", ProductController.findById);
 router.post(
   "/insert",
-  isAuthenticated,
-  isAdmin,
+  // isAuthenticated,
+  // isAdmin,
   productValidator.create_product_Validator,
   ProductController.postData
 );
