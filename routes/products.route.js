@@ -8,7 +8,11 @@ const { isAuthenticated, isAdmin } = require("../middleware/auth");
 const router = express.Router();
 
 router.get("/all", ProductController.fetchAll);
-router.get("/find-by-id/:id", ProductController.findById);
+router.get(
+  "/find-by-id/:id",
+  productValidator.delete_product_Validator,
+  ProductController.findById
+);
 router.post(
   "/insert",
   // isAuthenticated,
@@ -21,7 +25,11 @@ router.patch(
   productValidator.update_product_Validator,
   ProductController.updateData
 );
-router.delete("/delete/:id", ProductController.deleteOne);
+router.delete(
+  "/delete/:id",
+  productValidator.delete_product_Validator,
+  ProductController.deleteOne
+);
 
 // router.patch("/update/:id", verifyToken, ProductController.updateData);
 

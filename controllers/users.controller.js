@@ -8,15 +8,23 @@ var cookieParser = require("cookie-parser");
 class UserController {
   signUp = async (req, res) => {
     try {
-      const newUser = req.body;
-      let result = await User.createUser(newUser);
-      let logFileResult = await insertInLog("SIGN_UP", newUser?.email);
+      const { firstName, lastName, password, confirmPassword, email } =
+        req.body;
+      const user = new User({
+        firstName,
+        lastName,
+        password,
+        confirmPassword,
+        email,
+      });
+      let result = await user.save();
+      let logFileResult = await insertInLog("SIGN_UP", user?.email);
       // console.log(result);
-      if (result.success) {
+      if (result) {
         return res.status(200).send(
           success("successfully registered the user", {
             id: result.id,
-            email: newUser.email,
+            email: user.email,
           })
         );
       } else {
@@ -30,8 +38,8 @@ class UserController {
 
   logIn = async (req, res) => {
     try {
-      const user = req.body;
-      let result = await User.logInUser(user);
+      const { email } = req.body;
+      let result = await User.findOne(user);
       let logFileResult = await insertInLog("LOG_IN", user?.email);
       let token = generateToken({ email: user.email });
       console.log(token);

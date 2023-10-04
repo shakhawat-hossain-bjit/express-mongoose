@@ -124,12 +124,24 @@ class ProductController {
       }
 
       // find by title and description
-      let { search } = req.query;
+      let { search, category } = req.query;
+      // if (search) {
+      //   let re = new RegExp(`${search}`, "i");
+      //   // query.title = { $regex: re };
+      //   // query.description = { $regex: re };
+      //   query.title = { $regex: re };
+      // }
       if (search) {
-        let re = new RegExp(`${search}`, "i");
-        query.title = { $regex: re };
-        query.description = { $regex: re };
+        query["$or"] = [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          // { category: { $regex: search, $options: "i" } },
+        ];
       }
+      if (category) {
+        query["$or"] = [{ category: { $regex: category, $options: "i" } }];
+      }
+
       console.log("query  ==> ", query);
 
       let result = await Product.find(query)
@@ -162,61 +174,66 @@ class ProductController {
   };
 
   deleteOne = async (req, res) => {
-    const { id } = req.params;
-    if (id) {
-      try {
-        let result = await Product.deleteOne({ _id: id });
-        let logFileResult = await insertInLog("DELETE_PRODUCT", id);
-        // console.log(result);
-        if (result?.deletedCount) {
-          return res.status(200).send(success("successfully deleted the data"));
-        } else {
-          return res.status(400).send(success("Failed to delete"));
-        }
-      } catch (e) {
-        console.log(e);
-        return res.status(400).send(failure("Internal error occured"));
+    try {
+      const validation = validationResult(req).array();
+      if (validation.length) {
+        return res
+          .status(422)
+          .send(failure("Invalid inputs provided", validation));
       }
-    } else {
-      return res.status(400).send(failure("Pass an id via your url"));
+      const { id } = req.params;
+      let result = await Product.deleteOne({ _id: id });
+      let logFileResult = await insertInLog("DELETE_PRODUCT", id);
+      // console.log(result);
+      if (result?.deletedCount) {
+        return res.status(200).send(success("successfully deleted the data"));
+      } else {
+        return res.status(404).send(failure("Not Found"));
+      }
+    } catch (e) {
+      console.log(e);
+      return res.status(400).send(failure("Internal error occured"));
     }
   };
 
   findById = async (req, res) => {
-    const { id } = req.params;
-    if (id) {
-      try {
-        let result = await Product.find({ _id: id });
-        let logFileResult = await insertInLog("GET_ONE_PRODUCT", id);
-        // console.log(result);
-        if (result.length) {
-          // const verificationCode = generateVerificationCode();
-          // await sendVerificationEmail("shihabctag@gmail.com", 123456);
-          return res
-            .status(200)
-            .send(success("Successfully fetched the data", result[0]));
-        } else {
-          return res
-            .status(404)
-            .send(failure("There is no such data with this ID"));
-        }
-      } catch (error) {
-        console.log(error);
-        return res.status(400).send(failure("Internal error occured"));
+    try {
+      const { id } = req.params;
+      const validation = validationResult(req).array();
+      if (validation.length) {
+        return res
+          .status(422)
+          .send(failure("Invalid inputs provided", validation));
       }
-    } else {
-      return res.status(404).send(failure("Pass an id via your url"));
+
+      let result = await Product.find({ _id: id });
+      let logFileResult = await insertInLog("GET_ONE_PRODUCT", id);
+      // console.log(result);
+      if (result.length) {
+        // const verificationCode = generateVerificationCode();
+        // await sendVerificationEmail("shihabctag@gmail.com", 123456);
+        return res
+          .status(200)
+          .send(success("Successfully fetched the data", result[0]));
+      } else {
+        return res
+          .status(404)
+          .send(failure("There is no such data with this ID"));
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send(failure("Internal error occured"));
     }
   };
 
   postData = async (req, res) => {
     try {
-      // const validation = validationResult(req).array();
-      // if (validation.length) {
-      //   return res
-      //     .status(422)
-      //     .send(failure("Invalid inputs provided", validation));
-      // }
+      const validation = validationResult(req).array();
+      if (validation.length) {
+        return res
+          .status(422)
+          .send(failure("Invalid inputs provided", validation));
+      }
       console.log("body ", req.body);
       const {
         title,
@@ -259,42 +276,57 @@ class ProductController {
   };
 
   updateData = async (req, res) => {
-    const { id } = req.params;
-    if (id) {
-      try {
-        const validation = validationResult(req).array();
-        if (validation.length) {
-          return res
-            .status(422)
-            .send(failure("Invalid inputs provided", validation));
-        }
-
-        let newProduct = req.body;
-        if (newProduct.hasOwnProperty("id")) {
-          return res.status(422).send(failure("Id proprty shouldn't pass"));
-        }
-
-        let result = await Product.updateOne({ _id: id }, { $set: newProduct });
-        let logFileResult = await insertInLog("UPDATE_PRODUCT", id);
-        // console.log(result);
-        if (result?.modifiedCount) {
-          return res.status(200).send(success("Successfully Updated"));
-        } else if (result?.modifiedCount == 0) {
-          if (result?.matchedCount)
-            return res
-              .status(200)
-              .send(success("This data is already up to date"));
-          else
-            return res.status(200).send(failure("No such data with this id"));
-        }
-      } catch (error) {
-        console.log("error ", error);
-        return res.status(400).send(failure("Internal error occured"));
+    try {
+      const { id } = req.params;
+      const validation = validationResult(req).array();
+      if (validation.length) {
+        return res
+          .status(422)
+          .send(failure("Invalid inputs provided", validation));
       }
-    } else {
-      return res
-        .status(400)
-        .send(failure("Pass an id via your url in query parameter"));
+
+      const {
+        title,
+        description,
+        price,
+        stock,
+        discountPercentage,
+        rating,
+        brand,
+        category,
+        images,
+      } = req.body;
+
+      let result = await Product.updateOne(
+        { _id: id },
+        {
+          $set: {
+            title,
+            description,
+            price,
+            stock,
+            discountPercentage,
+            rating,
+            brand,
+            category,
+            images,
+          },
+        }
+      );
+      let logFileResult = await insertInLog("UPDATE_PRODUCT", id);
+      // console.log(result);
+      if (result?.modifiedCount) {
+        return res.status(200).send(success("Successfully Updated"));
+      } else if (result?.modifiedCount == 0) {
+        if (result?.matchedCount)
+          return res
+            .status(200)
+            .send(success("This data is already up to date"));
+        else return res.status(200).send(failure("No such data with this id"));
+      }
+    } catch (error) {
+      console.log("error ", error);
+      return res.status(400).send(failure("Internal error occured"));
     }
   };
 }

@@ -16,12 +16,15 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: Number,
   },
-  name: {
+  userName: {
     type: String,
   },
   email: {
     type: String,
     required: [true, "email is not provided"],
+  },
+  password: {
+    type: String,
   },
 });
 

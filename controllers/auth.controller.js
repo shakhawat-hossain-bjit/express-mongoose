@@ -18,17 +18,18 @@ class AuthController {
           .send(failure("Invalid inputs provided", validation));
       }
 
-      // console.log(req.body);
-      let { email, password, phone, name } = req.body;
+      console.log(req.body);
+
+      let { email, password, phone, userName } = req.body;
       email = email.toLowerCase().trim();
-      name = name.toLowerCase().trim();
+      userName = userName.toLowerCase().trim();
 
       /* check if emial and name available*/
       let findUser = await Auth.findOne({
-        $or: [{ email: email }, { name: name }],
+        $or: [{ email: email }],
       });
       // console.log("findUser ", findUser);
-      if (findUser?.email == email && findUser?.name == name) {
+      if (findUser?.email == email && findUser?.userName == userName) {
         return res
           .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
           .send(failure("This email and name is not available"));
@@ -37,7 +38,7 @@ class AuthController {
         return res
           .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
           .send(failure("This email is not available"));
-      } else if (findUser?.name == name) {
+      } else if (findUser?.userName == userName) {
         return res
           .status(HTTP_STATUS.UNPROCESSABLE_ENTITY)
           .send(failure("This user name is not available"));
@@ -48,7 +49,7 @@ class AuthController {
       let user = new User({
         email,
         phone,
-        name,
+        userName,
         password,
       });
 

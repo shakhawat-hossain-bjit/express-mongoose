@@ -32,20 +32,20 @@ const authValidator = {
       .bail(),
 
     body("phone").isNumeric().withMessage("Phone must be a number"),
-    body("name")
+    body("userName")
       .exists()
-      .withMessage("Name must be provided")
+      .withMessage("userName must be provided")
       .bail()
 
       .notEmpty()
-      .withMessage("Name cannot be empty")
+      .withMessage("userName cannot be empty")
       .bail()
 
       .isString()
-      .withMessage("Name must be a string")
+      .withMessage("userName must be a string")
       .isLength({ min: 5, max: 20 })
       .withMessage(
-        "Name must not less than 5 characters, and more than 20 characters"
+        "userName must not less than 5 characters, and more than 20 characters"
       ),
   ],
 };
